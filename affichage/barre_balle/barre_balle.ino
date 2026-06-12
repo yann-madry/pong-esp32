@@ -11,14 +11,10 @@ void setup() {
   Serial.begin(115200);
 
   Serial.println("128x64 OLED FeatherWing test");
-  delay(250); // wait for the OLED to power up
-  display.begin(0x3C, true); // Address 0x3C default
+  display.begin(0x3C, true);
 
   Serial.println("OLED begun");
 
-  // Show image buffer on the display hardware.
-  // Since the buffer is intialized with an Adafruit splashscreen
-  // internally, this will display the splashscreen.
   display.display();
   delay(1000);
 
@@ -34,14 +30,25 @@ void setup() {
   display.setCursor(0,0);
 }
 
+int i=53;
+
 void loop() {
-  for (int i=0; i<98; i++) {
-    display.fillCircle(64, 32, 2, 1);
-    display.fillRect(i, 60, 30, 4, 1);
-    delay(5);
-    yield();
-    display.display();
-    delay(5);
-    display.clearDisplay();
+  
+  display.clearDisplay();
+  
+  int sensorValue2 = analogRead(A3);
+  if (sensorValue2<1000 && 0<i){
+    i-=2;
   }
+  // faire attention a limite avec vitesse deplacement
+  if (sensorValue2>2000 && i<128-30){
+    i+=2;
+  }
+
+  display.fillCircle(64, 32, 2, 1);
+  display.fillRect(i, 60, 30, 4, 1);
+  delay(5);
+  yield();
+  display.display();
+  delay(5);  
 }
