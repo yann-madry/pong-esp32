@@ -9,11 +9,15 @@ Barre::Barre() {
 }
 
 void Barre::deplacement(int y) {
-  if (y < 1000 && x > 0) {
+  if (y < 1000 && x>0) {
     x -= speed;
   }
 
-  if (y > 2000 && x < 98) {
+  if (y > 2000 && x<128-width-speed) {
     x += speed;
-  }
+  }  
+}
+
+void Barre::afficher(Adafruit_GFX& display){
+  display.fillRect(x, y, width, height, 1);
 }
