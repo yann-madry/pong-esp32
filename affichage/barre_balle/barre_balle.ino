@@ -38,9 +38,18 @@ void loop() {
 
   barre.deplacement(analogRead(A3));
   balle.deplacement(barre);
-
-  balle.afficher(display);
-  barre.afficher(display);
-
-  display.display();
+  if (balle.perdu()){
+    display.clearDisplay();
+    display.print("Perdue");
+    display.display();
+    delay(1000);
+    barre.reset();
+    balle.reset();
+    display.setCursor(0, 0);
+  }
+  else {
+    balle.afficher(display);
+    barre.afficher(display);
+    display.display();
+  }  
 }

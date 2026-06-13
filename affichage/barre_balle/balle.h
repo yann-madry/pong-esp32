@@ -10,6 +10,8 @@ struct Balle {
   Balle();
   void deplacement(const Barre& barre);
   void afficher(Adafruit_GFX& display);
+  bool perdu();
+  void reset();
 };
 
 #endif

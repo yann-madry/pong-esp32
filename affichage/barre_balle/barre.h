@@ -9,6 +9,7 @@ struct Barre {
   Barre();
   void deplacement(int y);
   void afficher(Adafruit_GFX& display);
+  void reset();
 };
 
 #endif
