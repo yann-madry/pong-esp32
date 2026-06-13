@@ -8,15 +8,11 @@
 Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
 void setup() {
-  Serial.begin(115200);
-
-  Serial.println("128x64 OLED FeatherWing test");
+  Serial.begin(115200);;
   display.begin(0x3C, true);
 
-  Serial.println("OLED begun");
-
   display.display();
-  delay(1000);
+  delay(800);
 
   // Clear the buffer.
   display.clearDisplay();
@@ -30,26 +26,61 @@ void setup() {
   display.setCursor(0,0);
 }
 
+enum State {
+  MENU,
+  GAME,
+  GAMEOVER
+};
+
+State mode = MENU;
+
 Barre barre;
 Balle balle;
 
 void loop() {
-  display.clearDisplay();
+  switch (mode) {
+    case MENU:
+      menu();
+      break;
 
+    case GAME:
+      game();
+      break;
+
+    case GAMEOVER:
+      gameOver();
+      break;
+  }
+}
+
+void menu(){
+  display.clearDisplay();
+  display.print("Appuyer sur le joystick pour jouer");
+  if (analogRead(A2)==4095) mode=GAME;
+  display.display();
+  display.setCursor(0,0);
+}
+
+void game() {
+  display.clearDisplay();
   barre.deplacement(analogRead(A3));
   balle.deplacement(barre);
-  if (balle.perdu()){
-    display.clearDisplay();
-    display.print("Perdue");
-    display.display();
-    delay(1000);
-    barre.reset();
-    balle.reset();
-    display.setCursor(0, 0);
-  }
+  if (balle.perdu()) gameOver();
   else {
     balle.afficher(display);
     barre.afficher(display);
     display.display();
-  }  
+  }    
+}
+
+void gameOver(){
+  display.clearDisplay();
+  display.print("Perdue");
+  display.display();
+  delay(1000);
+  barre.reset();
+  balle.reset();
+  display.setCursor(0, 0);
+  mode=MENU;
+  display.clearDisplay();
 }
