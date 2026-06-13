@@ -5,7 +5,7 @@
 #include <barre.h>
 
 struct Balle {
-  int x, y, r, sensX, sensY, speed;
+  int x, y, r, sensX, sensY, speed, maxSpeed;
 
   Balle();
   void deplacement(const Barre& barre);

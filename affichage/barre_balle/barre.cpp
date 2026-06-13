@@ -1,7 +1,7 @@
 #include "barre.h"
 
 Barre::Barre() {
-  x = 53;
+  x = 49;
   y = 60;
   width = 30;
   height = 4;
