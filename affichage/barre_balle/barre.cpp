@@ -29,14 +29,3 @@ void Barre::reset(){
   height=4;
   speed=2;
 }
-
-
-
-
-
-
-    
-
-    
-
-    

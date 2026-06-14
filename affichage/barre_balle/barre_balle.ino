@@ -3,7 +3,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
 #include "barre.h"
-#include "balle.h"  
+#include "balle.h"
+#include "menu.h"  
   
 #define BUTTON_A 15
 #define BUTTON_B 32
@@ -11,17 +12,19 @@
 
 Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
+
 enum State {
-  Menu,
+  MenuAcceuil,
   GameSolo,
   GameMulti,
   GameOver
 };
 
-State mode = Menu;
+State mode = MenuAcceuil;
 
 Barre barre;
 Balle balle;
+Menu menu;
 
 void setup() {
   Serial.begin(115200);;
@@ -48,16 +51,57 @@ void setup() {
 
 void loop() {
   switch (mode) {
-    case Menu:
-      menu();
+    case MenuAcceuil:
+      // 1. On dessine le menu
+      menu.drawMenu(display);
+      
+      // 2. On vérifie si handleJoystick renvoie "true" (clic détecté)
+      if (menu.handleJoystick(display)) {
+        // Optionnel : un petit effet visuel de validation
+        menu.executeAction(menu.getSelectedIndex(), display);
+        
+        // 3. C'est ici qu'on récupère l'index pour changer de mode !
+        int choix = menu.getSelectedIndex();
+        if (choix == 0) mode = GameMulti;
+        if (choix == 1) mode = GameSolo;
+        // index 2 pour les paramètres si tu veux plus tard
+      }
+      delay(10);
       break;
 
     case GameSolo:
-      gameSolo();
+      display.clearDisplay();
+      if (balle.perdu()) gameOver();
+      else {
+        barre.deplacement(analogRead(A3));
+        balle.deplacement(barre);
+        if(!digitalRead(BUTTON_C)){
+          barre.reset();
+          balle.reset();
+          menu.reset();
+          mode=MenuAcceuil;
+        }
+        
+        else {
+          balle.afficher(display);
+          barre.afficher(display);
+          display.display();
+        }
+      }      
       break;
 
     case GameMulti:
-      gameMulti();
+      display.clearDisplay();
+      display.print("mode multi");
+      display.setCursor(0,0);
+      display.display();
+      if(!digitalRead(BUTTON_C)){
+        barre.reset();
+        balle.reset();
+        menu.reset();
+        mode=MenuAcceuil;
+      }
+      menu.reset();
       break;  
 
     case GameOver:
@@ -66,51 +110,11 @@ void loop() {
   }
 }
 
-void menu(){
-  display.clearDisplay();
-  display.println("Appuyer sur A pour jouer en solo");
-  display.print("Appuyer sur B pour jouer en multi");
-  if(!digitalRead(BUTTON_A)) mode=GameSolo;
-  if(!digitalRead(BUTTON_B)) mode=GameMulti;
-  
-  display.display();
-  display.setCursor(0,0);
-}
-
-void gameSolo() {
-  display.clearDisplay();
-  barre.deplacement(analogRead(A3));
-  balle.deplacement(barre);
-  if (balle.perdu()) gameOver();
-  if(!digitalRead(BUTTON_C)){
-    barre.reset();
-    balle.reset();
-    mode=Menu;
-  }
-  else {
-    balle.afficher(display);
-    barre.afficher(display);
-    display.display();
-  }    
-}
-
-void gameMulti(){
-  display.clearDisplay();
-  display.print("mode multi");
-  display.setCursor(0,0);
-  display.display();
-  if(!digitalRead(BUTTON_C)){
-    barre.reset();
-    balle.reset();
-    mode=Menu;
-  }
-}
-
 void gameOver(){
   display.clearDisplay();
   display.println("Perdue");
   display.println("Cliquer sur le joystick pour rejouer");
-  display.print("Ou C pour retourner au menu");
+  display.print("Ou C pour retourner au MenuAcceuil");
   display.display();
   display.setCursor(0, 0);
 
@@ -120,7 +124,7 @@ void gameOver(){
     balle.reset();
   } 
   if(!digitalRead(BUTTON_C)){
-    mode=Menu;
+    mode=MenuAcceuil;
     barre.reset();
     balle.reset();
   }   
