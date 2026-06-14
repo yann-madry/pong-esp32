@@ -9,7 +9,7 @@ Barre::Barre() {
 }
 
 void Barre::deplacement(int y) {
-  if (y<1000&&x>0) {
+  if (y<1000 && x>0) {
     x-=speed;
   }
 
