@@ -3,24 +3,44 @@
 
 #include <Adafruit_SH110X.h>
 
-class Menu {
-  private:
-    int r;
-    int currentIndex;
-    static const int NUM_ITEMS = 3;
+struct MenuItem {
+    const char* label;
+    int value;
+};
 
-    const char* menuItems[NUM_ITEMS];
+class Menu {
+private:
+    MenuItem* items;
+    int numItems;
+
+    int currentIndex;
+    int r;
     unsigned long lastMoveTime;
 
-  public:
-    Menu();
+public:
+    template <size_t N>
+    Menu(MenuItem (&items)[N]) {
+        this->items = items;
+        this->numItems = N;
 
-    bool handleJoystick(Adafruit_SH1107& display);
+        currentIndex = 0;
+        r = 4;
+        lastMoveTime = 0;
+    }
 
+    template <size_t N>
+    void setItems(MenuItem (&items)[N]) {
+        this->items = items;
+        this->numItems = N;
+        currentIndex = 0;
+    }
+
+    bool handleJoystick();
     void drawMenu(Adafruit_SH1107& display);
-    void executeAction(int index, Adafruit_SH1107& display);
 
     int getSelectedIndex() const;
+    int getSelectedValue() const;
+
     void reset();
 };
 

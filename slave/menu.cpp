@@ -3,79 +3,89 @@
 
 #define JOYSTICK_PIN A2
 
-Menu::Menu() {
-  r = 4;
-  currentIndex = 0;
-  lastMoveTime = 0;
+bool Menu::handleJoystick() {
+    int val = analogRead(JOYSTICK_PIN);
 
-  menuItems[0] = "MULTI";
-  menuItems[1] = "SOLO";
-  menuItems[2] = "PARAMETRES";
-}
+    if (millis() - lastMoveTime > 250) {
 
-bool Menu::handleJoystick(Adafruit_SH1107& display) {
-  int val = analogRead(JOYSTICK_PIN);
+        if (val < 1000 && currentIndex > 0) {
+            currentIndex--;
+            lastMoveTime = millis();
+        }
 
-  if (millis() - lastMoveTime > 250) {
-    if (val < 1000 && currentIndex > 0) {
-      currentIndex--;
-      lastMoveTime = millis();
+        else if (val > 2000 && val < 4000 && currentIndex < numItems - 1) {
+            currentIndex++;
+            lastMoveTime = millis();
+        }
+
+        else if (val >= 4090) {
+            lastMoveTime = millis();
+            return true;
+        }
     }
-    else if (val > 2000 && val < 4000 && currentIndex < NUM_ITEMS - 1) {
-      currentIndex++;
-      lastMoveTime = millis();
-    }
-    else if (val >= 4090) {
-      lastMoveTime = millis();
-      return true;
-    }
-  }
 
-  return false;
+    return false;
 }
 
 void Menu::drawMenu(Adafruit_SH1107& display) {
-  display.clearDisplay();
-  display.setTextSize(1);
+    display.clearDisplay();
+    display.setTextSize(1);
 
-  int hY = (currentIndex == 0) ? 2 : (currentIndex == 1) ? 20 : 41;
-  display.fillRoundRect(2, hY, 123, (currentIndex == 1) ? 24 : 20, r, SH110X_WHITE);
+    const int menuTop = 2;
+    const int menuHeight = 60;
+    const int itemHeight = menuHeight / numItems;
 
-  for (int i = 0; i < NUM_ITEMS; i++) {
-    bool isSel = (currentIndex == i);
+    display.fillRoundRect(
+        2,
+        menuTop + currentIndex * itemHeight,
+        123,
+        itemHeight,
+        r,
+        SH110X_WHITE
+    );
 
-    display.setTextColor(isSel ? SH110X_BLACK : SH110X_WHITE);
-    display.setCursor(8, 8 + (i * 20));
+    for (int i = 0; i < numItems; i++) {
 
-    if (isSel) display.write(0x10);
-    else if (i == 0 && currentIndex > 0) display.write(0x18);
-    else if (i == 2 && currentIndex < 2) display.write(0x19);
-    else display.print(" ");
+        bool selected = (i == currentIndex);
 
-    display.print("  ");
-    display.print(menuItems[i]);
-  }
+        display.setTextColor(
+            selected ? SH110X_BLACK : SH110X_WHITE
+        );
 
-  display.drawRoundRect(0, 0, 127, 63, r, SH110X_WHITE);
-  display.display();
-}
+        display.setCursor(
+            8,
+            menuTop + i * itemHeight + itemHeight / 2 - 4
+        );
 
-void Menu::executeAction(int index, Adafruit_SH1107& display) {
-  Serial.printf("Action : %s\n", menuItems[index]);
+        if (selected)
+            display.write(0x10);
+        else
+            display.print(" ");
 
-  for (int i = 0; i < 2; i++) {
-    display.invertDisplay(true);
-    delay(80);
+        display.print("  ");
+        display.print(items[i].label);
+    }
 
-    display.invertDisplay(false);
-    delay(80);
-  }
+    display.drawRoundRect(
+        0,
+        0,
+        127,
+        63,
+        r,
+        SH110X_WHITE
+    );
+
+    display.display();
 }
 
 int Menu::getSelectedIndex() const {
-  return currentIndex;
+    return currentIndex;
+}
+
+int Menu::getSelectedValue() const {
+    return items[currentIndex].value;
 }
 
 void Menu::reset() {
-  currentIndex = 0;
+    currentIndex = 0;
 }
