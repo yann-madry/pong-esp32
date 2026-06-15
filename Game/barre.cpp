@@ -8,14 +8,18 @@ Barre::Barre() {
   speed=2;
 }
 
-void Barre::deplacement(int y) {
-  if (y<1000 && x>0) {
+void Barre::deplacement(int v) {
+  if (v<1000 && x>0) {
     x-=speed;
   }
 
-  if (y>2000 && x<128-width-speed) {
+  if (v>2000 && x<128-width-speed) {
     x+=speed;
-  }  
+  }
+
+  if (v<=128-width && 0<=v-width/2) {
+    x=v-width/2;
+  }
 }
 
 void Barre::afficher(Adafruit_GFX& display){

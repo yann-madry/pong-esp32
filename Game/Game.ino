@@ -24,6 +24,8 @@ enum State {
 State mode = MenuAcceuil;
 
 Barre barre;
+Barre adverse;
+
 Balle balle;
 Menu menu;
 
@@ -32,25 +34,21 @@ int tDep=0;
 int vie=3;
 
 void setup() {
-  Serial.begin(115200);;
+  Serial.begin(115200);
   display.begin(0x3C, true);
 
   display.display();
   delay(800);
 
-  // Clear the buffer.
   display.clearDisplay();
   display.display();
 
   display.setRotation(1);
 
-  // text display tests
   display.setTextSize(1);
   display.setTextColor(SH110X_WHITE);
   display.setCursor(0,0);
 
-  pinMode(BUTTON_A, INPUT_PULLUP);
-  pinMode(BUTTON_B, INPUT_PULLUP);
   pinMode(BUTTON_C, INPUT_PULLUP);
 }
 
@@ -69,42 +67,50 @@ void loop() {
 
     case GameSolo:
       display.clearDisplay();
-      if (vie==0) gameOver();
-      if (balle.perdu()){
-        vie--;
-        balle.reset();
-        barre.reset();
-      }
+      if (vie==0) mode=GameOver;
       else {
-        barre.deplacement(analogRead(A3));
-        balle.deplacement(barre);
-        
-        if(!digitalRead(BUTTON_C)){
-          barre.reset();
+        if (balle.perdu()){
+          vie--;
           balle.reset();
-          menu.reset();
-          mode=MenuAcceuil;
+          barre.reset();
         }
+        else {
+          adverse.y=0;
+          barre.deplacement(analogRead(A3));
+          balle.deplacement(barre);
+          adverse.deplacement(balle.x);
+          
+          if(!digitalRead(BUTTON_C)){
+            vie=3;
+            barre.reset();
+            balle.reset();
+            menu.reset();
+            mode=MenuAcceuil;
+          }
 
-        if (analogRead(A2)==4095) {
-          if (joystickAppuyer==false) {
-            joystickAppuyer=true;
-            tDep = millis();
+          if (analogRead(A2)==4095) {
+            if (joystickAppuyer==false) {
+              joystickAppuyer=true;
+              tDep = millis();
+            } 
+            else if (millis()-tDep>=1000) { 
+              joystickAppuyer = false;
+              mode = PauseGame;
+            }
           } 
           else {
-            if (millis()-tDep>=1000) { 
-              joystickAppuyer = false;
-              mode = PauseGame; 
-            }
+            joystickAppuyer = false;
           }
-        } 
-        else {
-          joystickAppuyer = false;
+          display.setCursor(0,0);
+          for (int i=0; i<vie; i++){
+            display.write(0x03);
+          }
+          balle.afficher(display);
+          adverse.afficher(display);
+          barre.afficher(display);
+          display.display();
         }
-        balle.afficher(display);
-        barre.afficher(display);
-        display.display();
-      }      
+      }  
       break;
 
     case GameMulti:
@@ -133,7 +139,6 @@ void loop() {
 
 void gameOver(){
   display.clearDisplay();
-  vie=3;
   display.setCursor(0, 0);
   display.println("Perdue");
   display.println("Cliquer sur le joystick pour rejouer");
@@ -143,11 +148,13 @@ void gameOver(){
   delay(250);
   if (analogRead(A2)==4095){
     mode=GameSolo;
+    vie=3;
     barre.reset();
     balle.reset();
   } 
   if(!digitalRead(BUTTON_C)){
     mode=MenuAcceuil;
+    vie=3;
     barre.reset();
     balle.reset();
   }   
