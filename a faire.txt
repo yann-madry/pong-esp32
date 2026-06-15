@@ -1,6 +1,5 @@
-Clean menu pause
 ajout score jeu solo
 navigation : gestion maintiens joystick etc
-paramètre (buzzer …)
+paramètre (buzzer…)
 balle pour celui qui a perdue le point
 écran dans le bon sens
