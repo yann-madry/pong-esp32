@@ -55,6 +55,7 @@ Menu menu(menuPrincipal);
 bool joystickAppuyer = false;
 int tDep = 0;
 int vie = 3;
+int score= 0;
 bool balleLancee = false; 
 
 unsigned long dernierSignalRecu = 0;
@@ -71,7 +72,7 @@ struct MessageMaitre {
     int raquetteX_J1; 
     int raquetteX_J2; 
     int balleX;       
-    int balleY;       
+    int balleY;     
 };
 
 MessageEsclave messE; 
@@ -136,7 +137,8 @@ void loop() {
         
         if (action == GameMulti) mode = AttenteJoueur;
         else if (action == GameSolo) { 
-          vie = 3; 
+          vie = 3;
+          score = 0;
           barre.reset(); 
           balle.reset(); 
           mode = GameSolo; 
@@ -195,6 +197,8 @@ void loop() {
           barre.deplacement(analogRead(A3));
           balle.deplacement(barre);
           adverse.suivreBalle(balle.x);
+
+          
           
           if(!digitalRead(BUTTON_C)) {
             menu.setItems(menuPrincipal);
@@ -211,8 +215,19 @@ void loop() {
             }
           } else { joystickAppuyer = false; }
 
+          // Détection du rebond sur la barre joueur
+          if (balle.toucheBarre(barre)) {
+            score++;
+          }
+
           display.setCursor(0,0);
           for (int i=0; i<vie; i++){ display.write(0x03); }
+
+          // Affichage du score à droite
+          display.setCursor(90, 0);
+          display.print("S:");
+          display.print(score);
+
           balle.afficher(display);
           adverse.afficher(display);
           barre.afficher(display);
@@ -294,6 +309,7 @@ void gameOver(){
     if (action == GameSolo || action == GameMulti) { // Bouton Rejouer
       mode = GameSolo; 
       vie = 3; 
+      score=0;
       barre.reset(); 
       balle.reset();
     } else { // Bouton Retour Menu
