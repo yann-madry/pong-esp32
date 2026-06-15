@@ -3,28 +3,29 @@
 
 #include <Adafruit_SH110X.h>
 
+Menu::Menu() : 
+  menuItems[0] = "MULTI";
+  menuItems[1] = "SOLO";
+  menuItems[2] = "PARAMETRES";
+}
 class Menu {
   private:
-    // static const permet de définir la taille du tableau directement
-    static const int NUM_ITEMS = 3; 
-    const int JOYSTICK_PIN;
-    const int r;
+    int r, currentIndex, lastMoveTime;
+    static const int NUM_ITEMS = 3;
     
     const char* menuItems[NUM_ITEMS];
     int currentIndex;
     unsigned long lastMoveTime;
 
   public:
-    Menu(); // Constructeur
-    
-    // Retourne true si un clic est validé
+    Menu();
+
     bool handleJoystick(Adafruit_SH1107& display); 
-    
-    // On passe l'objet de l'écran en paramètre par référence
+
     void drawMenu(Adafruit_SH1107& display); 
     void executeAction(int index, Adafruit_SH1107& display);
     
-    int getSelectedIndex() const { return currentIndex; }
+    int getSelectedIndex() const;
     void reset();
 };
 

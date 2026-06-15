@@ -1,8 +1,11 @@
 #include "menu.h"
-#include <Arduino.h> // Nécessaire pour millis(), analogRead() et Serial
+#include <Arduino.h>
 
-// Utilisation de la liste d'initialisation C++ pour les constantes
+#define JOYSTICK_PIN=A2;
+
 Menu::Menu() : JOYSTICK_PIN(A2), r(4), currentIndex(0), lastMoveTime(0) {
+  r=4;
+  currentIndex(0), lastMoveTime(0
   menuItems[0] = "MULTI";
   menuItems[1] = "SOLO";
   menuItems[2] = "PARAMETRES";
@@ -21,7 +24,7 @@ bool Menu::handleJoystick(Adafruit_SH1107& display) {
     }
     else if (val == 4095) {
       lastMoveTime = millis();
-      return true; // On signale au fichier principal qu'un clic a eu lieu !
+      return true;
     }
   }
   return false;
@@ -31,20 +34,18 @@ void Menu::drawMenu(Adafruit_SH1107& display) {
   display.clearDisplay();
   display.setTextSize(1);
 
-  // 1. Calcul et dessin unique du rectangle de surbrillance
   int hY = (currentIndex == 0) ? 2 : (currentIndex == 1) ? 20 : 41;
   display.fillRoundRect(2, hY, 123, (currentIndex == 1) ? 24 : 20, r, SH110X_WHITE);
 
-  // 2. Boucle unique pour afficher TOUS les éléments du menu
   for (int i = 0; i < NUM_ITEMS; i++) {
     bool isSel = (currentIndex == i);
     display.setTextColor(isSel ? SH110X_BLACK : SH110X_WHITE);
     
     display.setCursor(8, 8 + (i * 20));
 
-    if (isSel) display.write(0x10); // ►
-    else if (i == 0 && currentIndex > 0) display.write(0x18); // ↑
-    else if (i == 2 && currentIndex < 2) display.write(0x19); // ↓
+    if (isSel) display.write(0x10);
+    else if (i == 0 && currentIndex > 0) display.write(0x18);
+    else if (i == 2 && currentIndex < 2) display.write(0x19);
     else display.print(" ");
     
     display.print("  "); display.print(menuItems[i]);

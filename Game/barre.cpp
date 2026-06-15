@@ -19,7 +19,7 @@ void Barre::deplacement(int y) {
 }
 
 void Barre::afficher(Adafruit_GFX& display){
-  display.fillRect(x, y, width, height, 1);
+  display.fillRoundRect(x, y, width, height, 4, 1);
 }
 
 void Barre::reset(){

@@ -29,6 +29,7 @@ Menu menu;
 
 bool joystickAppuyer=false;
 int tDep=0;
+int vie=3;
 
 void setup() {
   Serial.begin(115200);;
@@ -68,7 +69,12 @@ void loop() {
 
     case GameSolo:
       display.clearDisplay();
-      if (balle.perdu()) gameOver();
+      if (vie==0) gameOver();
+      if (balle.perdu()){
+        vie--;
+        balle.reset();
+        barre.reset();
+      }
       else {
         barre.deplacement(analogRead(A3));
         balle.deplacement(barre);
@@ -127,6 +133,7 @@ void loop() {
 
 void gameOver(){
   display.clearDisplay();
+  vie=3;
   display.setCursor(0, 0);
   display.println("Perdue");
   display.println("Cliquer sur le joystick pour rejouer");
