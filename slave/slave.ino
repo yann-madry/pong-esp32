@@ -148,7 +148,7 @@ void loop() {
           adverse.y=0;
           barre.deplacement(analogRead(A3));
           balle.deplacement(barre);
-          adverse.deplacement(balle.x);
+          adverse.suivreBalle(balle.x);
           if(!digitalRead(BUTTON_C)) mode=MenuAcceuil;
           if (analogRead(A2)==4095) {
             if (!joystickAppuyer) { joystickAppuyer=true; tDep = millis(); } 
