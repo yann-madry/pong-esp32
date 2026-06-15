@@ -17,7 +17,8 @@ enum State {
   MenuAcceuil,
   GameSolo,
   GameMulti,
-  GameOver
+  GameOver,
+  PauseGame
 };
 
 State mode = MenuAcceuil;
@@ -25,6 +26,9 @@ State mode = MenuAcceuil;
 Barre barre;
 Balle balle;
 Menu menu;
+
+bool joystickAppuyer=false;
+int tDep=0;
 
 void setup() {
   Serial.begin(115200);;
@@ -52,19 +56,12 @@ void setup() {
 void loop() {
   switch (mode) {
     case MenuAcceuil:
-      // 1. On dessine le menu
       menu.drawMenu(display);
-      
-      // 2. On vérifie si handleJoystick renvoie "true" (clic détecté)
       if (menu.handleJoystick(display)) {
-        // Optionnel : un petit effet visuel de validation
         menu.executeAction(menu.getSelectedIndex(), display);
-        
-        // 3. C'est ici qu'on récupère l'index pour changer de mode !
         int choix = menu.getSelectedIndex();
         if (choix == 0) mode = GameMulti;
         if (choix == 1) mode = GameSolo;
-        // index 2 pour les paramètres si tu veux plus tard
       }
       delay(10);
       break;
@@ -75,18 +72,32 @@ void loop() {
       else {
         barre.deplacement(analogRead(A3));
         balle.deplacement(barre);
+        
         if(!digitalRead(BUTTON_C)){
           barre.reset();
           balle.reset();
           menu.reset();
           mode=MenuAcceuil;
         }
-        
+
+        if (analogRead(A2)==4095) {
+          if (joystickAppuyer==false) {
+            joystickAppuyer=true;
+            tDep = millis();
+          } 
+          else {
+            if (millis()-tDep>=1000) { 
+              joystickAppuyer = false;
+              mode = PauseGame; 
+            }
+          }
+        } 
         else {
-          balle.afficher(display);
-          barre.afficher(display);
-          display.display();
+          joystickAppuyer = false;
         }
+        balle.afficher(display);
+        barre.afficher(display);
+        display.display();
       }      
       break;
 
@@ -107,17 +118,22 @@ void loop() {
     case GameOver:
       gameOver();
       break;
+
+    case PauseGame:
+      pauseGame();
+      break;
   }
 }
 
 void gameOver(){
   display.clearDisplay();
+  display.setCursor(0, 0);
   display.println("Perdue");
   display.println("Cliquer sur le joystick pour rejouer");
-  display.print("Ou C pour retourner au MenuAcceuil");
+  display.print("Ou C pour retourner au Menu");
   display.display();
-  display.setCursor(0, 0);
 
+  delay(250);
   if (analogRead(A2)==4095){
     mode=GameSolo;
     barre.reset();
@@ -128,4 +144,20 @@ void gameOver(){
     barre.reset();
     balle.reset();
   }   
+}
+
+void pauseGame(){
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println("Pause");
+  display.println("Cliquer sur le joystick pour reprendre");
+  display.print("Ou maintener le pour aller au Menu");
+  display.display();
+
+  delay(250);
+  if (analogRead(A2)==4095){
+    mode=GameSolo;
+    barre.reset();
+    balle.reset();
+  }  
 }
