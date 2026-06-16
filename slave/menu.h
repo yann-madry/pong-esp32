@@ -16,6 +16,7 @@ private:
     int currentIndex;
     int r;
     unsigned long lastMoveTime;
+    bool boutonEtaitAppuye = false;
 
 public:
     template <size_t N>

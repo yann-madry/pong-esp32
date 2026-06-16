@@ -35,10 +35,10 @@ void Balle::deplacement(const Barre& barre) {
 }
 
 bool Balle::toucheBarre(const Barre& b) {
-  return vientDeToucher
+  return vientDeToucher;
 }
 void Balle::afficher(Adafruit_GFX& display) {
-  display.fillCircle(x, y, r, 1)
+  display.fillCircle(x, y, r, 1);
 }
 
 bool Balle::perdu(){

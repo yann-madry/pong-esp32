@@ -24,6 +24,8 @@ enum Statut {
 };
 
 Statut mode = MenuAcceuil;
+bool enCoursDeValidation = false;
+bool ignorePremierAppuiPause = false;
 
 Barre barre;
 Barre adverse;
@@ -50,8 +52,9 @@ Menu menu(menuPrincipal);
 bool joystickAppuyer = false;
 int tDep = 0;
 int vie = 3;
-int score= 0;
-bool balleLancee = false; 
+int score= 3;
+bool balleLancee = false;
+int vieJ1=0;
 
 unsigned long dernierSignalRecu = 0;
 
@@ -88,6 +91,8 @@ void setup() {
   display.setTextColor(SH110X_WHITE);
 
   pinMode(BUTTON_C, INPUT_PULLUP);
+
+  pinMode(PIN_BUZZER, OUTPUT); //speaker
 
   WiFi.mode(WIFI_AP_STA);
   
@@ -147,29 +152,30 @@ void loop() {
       display.println(" --------------------");
       
       if (millis() - dernierSignalRecu < 1000 && (messE.modeEsclave == AttenteJoueur || messE.modeEsclave == GameMulti)) {
-         display.println("\n CONNEXION REUSSIE !");
-         display.display();
-         delay(1500); 
-         
-         barre.reset();        
-         adverse.reset();      
-         balle.reset();        
-         barre.y = 120;   
-         adverse.y = 4;   
-         balle.y = 114;       
-         balle.x = barre.x + (barre.width / 2); 
-         balle.sensY = -1;    
-         balle.sensX = 1;     
-         balleLancee = false; 
-         
-         mode = GameMulti;
+        display.println("\n CONNEXION REUSSIE !");
+        display.display();
+        delay(1500); 
+        
+        barre.reset();        
+        adverse.reset();      
+        balle.reset();        
+        barre.y = 120;   
+        adverse.y = 4;   
+        balle.y = 114;       
+        balle.x = barre.x + (barre.width / 2); 
+        balle.sensY = -1;    
+        balle.sensX = 1;     
+        balleLancee = false; 
+        
+        mode = GameMulti;
+        vieJ1=3;
       } else {
          display.println(" Statut: RECHERCHE...");
          display.display();
       }
 
       if(!digitalRead(BUTTON_C)) {
-        menu.setItems(menuPrincipal); 
+        menu.setItems(menuPrincipal);
         mode = MenuAcceuil;
       }
       delay(20);
@@ -211,10 +217,12 @@ void loop() {
           // Détection du rebond sur la barre joueur
           if (balle.toucheBarre(barre)) {
             score++;
+            bip();
           }
 
           display.setCursor(0,0);
           for (int i=0; i<vie; i++){
+            display.setCursor(0, 20+i*8);
             display.write(0x03);
           }
 
@@ -234,6 +242,7 @@ void loop() {
     case GameMulti:
       if (millis() - dernierSignalRecu > 2000) {
         mode = AttenteJoueur;
+        vieJ1=3;
         break;
       }
 
@@ -261,13 +270,16 @@ void loop() {
 
         if (balle.y + balle.r >= barre.y && balle.x >= barre.x && balle.x <= barre.x + barre.width) { 
           balle.sensY = -1; 
+          bip();
         }
         if (balle.y - balle.r <= adverse.y + adverse.height && balle.x >= adverse.x && balle.x <= adverse.x + adverse.width) { 
           balle.sensY = 1; 
+          bip();
         }
         if (balle.y > 128 || balle.y < 0) { 
           balleLancee = false; 
           balle.speed = 1;
+          vieJ1--;
         }
       }
 
@@ -275,10 +287,17 @@ void loop() {
         display.fillCircle(balle.x, balle.y - 64, balle.r, SH110X_WHITE); 
       }
       display.fillRoundRect(barre.x, barre.y - 64, barre.width, barre.height, 4, SH110X_WHITE);
+
+      for (int i=0; i<vieJ1; i++){
+        display.setCursor(0, 20+i*8);
+        display.write(0x03);
+      }
+
       display.display();
 
       if(!digitalRead(BUTTON_C)) {
         menu.setItems(menuPrincipal);
+        vieJ1=3;
         mode = MenuAcceuil;
       }
       break;
@@ -293,9 +312,15 @@ void loop() {
       
     case Parametres:
       display.clearDisplay();
-      display.setCursor(0,10);
-      display.println("   PARAMETRES");
-      display.println("\n (Pas d'options ici)");
+
+      display.setTextColor(SH110X_WHITE);
+      display.setCursor(0, 0);
+
+      display.println("PARAMETRES");
+      display.println("----------------");
+      display.println("Fonctionnalites");
+      display.println("a venir...");
+
       display.display();
       if(!digitalRead(BUTTON_C)) {
         menu.setItems(menuPrincipal);
@@ -311,15 +336,14 @@ void gameOver(){
   
   if (menu.handleJoystick()) {
     int action = menu.getSelectedValue();
-
     // Bouton Rejouer
     if (action == GameSolo || action == GameMulti) { 
       mode = GameSolo; 
       vie = 3; 
+      score=0;
       barre.reset(); 
       balle.reset();
-      
-    } else {  // Bouton Retour Menu
+    } else { // Bouton Retour Menu
       menu.setItems(menuPrincipal);
       mode = MenuAcceuil;
     }
@@ -328,17 +352,26 @@ void gameOver(){
 
 void pauseGame(){
   menu.drawMenu(display);
+
+    if (ignorePremierAppuiPause) {
+      if (analogRead(A2) < 4000) { // bouton relâché
+        ignorePremierAppuiPause = false;
+      }
+    return;
+  }
   
   if (menu.handleJoystick()) {
     int action = menu.getSelectedValue();
-
     // Bouton Reprendre
     if (action == GameSolo || action == GameMulti) { 
       mode = GameSolo;
-
-    } else {  // Bouton Retour Menu
+    } else { // Bouton Retour Menu
       menu.setItems(menuPrincipal);
       mode = MenuAcceuil;
     }
   }
+}
+
+void bip() {
+  tone(PIN_BUZZER, 1200, 30);
 }

@@ -9,6 +9,7 @@
 #include "menu.h"  
   
 #define BUTTON_C 14
+#define PIN_BUZZER A0
 
 Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
@@ -26,6 +27,7 @@ State mode = MenuAcceuil;
 unsigned long derniereReception = 0;
 unsigned long tempsValidation = 0;
 bool enCoursDeValidation = false;
+bool ignorePremierAppuiPause = false;
 
 Barre barre;       
 Barre adverse;     
@@ -53,6 +55,7 @@ bool joystickAppuyer = false;
 int tDep = 0;
 int vie = 3;
 int score = 0;
+int vieJ2=0;
 
 uint8_t adresseMaitre[] = {0x94, 0xB9, 0x7E, 0x5F, 0x19, 0x8C}; 
 
@@ -91,6 +94,9 @@ void setup() {
   display.setTextColor(SH110X_WHITE);
 
   pinMode(BUTTON_C, INPUT_PULLUP);
+
+  pinMode(PIN_BUZZER, OUTPUT); //speaker
+
   WiFi.mode(WIFI_AP_STA);
   
   if (esp_now_init() == ESP_OK) {
@@ -142,6 +148,7 @@ void loop() {
 
         if (millis() - tempsValidation >= 1500) {
           mode = GameMulti;
+          vieJ2=3;
         }
       } 
       else {
@@ -164,7 +171,11 @@ void loop() {
         mode = GameOver;
       }
       else {
-        if (balle.perdu()){ vie--; balle.reset(); barre.reset(); }
+        if (balle.perdu()){
+          vie--; 
+          balle.reset(); 
+          barre.reset(); 
+        }
         else {
           adverse.y=0;
           barre.deplacement(analogRead(A3));
@@ -187,10 +198,16 @@ void loop() {
           } else joystickAppuyer = false;
 
           // Détection du rebond sur la barre joueur
-          if (balle.toucheBarre(barre)) score++;
+          if (balle.toucheBarre(barre)){
+            score++;
+            bip();
+          } 
 
           display.setCursor(0,0);
-          for (int i=0; i<vie; i++){ display.write(0x03); }
+          for (int i=0; i<vie; i++){
+            display.setCursor(0, 20+i*8);
+            display.write(0x03);
+          }
 
           // Affichage du score à droite
           display.setCursor(90, 0);
@@ -209,6 +226,7 @@ void loop() {
       if (millis() - derniereReception > 2000 || messM.commandeMode == MenuAcceuil) {
         mode = AttenteJoueur;
         enCoursDeValidation = false;
+        vieJ2=3;
         break;
       }
 
@@ -216,11 +234,21 @@ void loop() {
       if (messM.balleY < 64) {
         display.fillCircle(messM.balleX, messM.balleY, 2, SH110X_WHITE); 
       }
-      display.fillRoundRect(messM.raquetteX_J2, 4, 30, 4, 4, SH110X_WHITE); 
+
+      if (balle.y > 128 || balle.y < 0) vieJ2--;
+
+      display.fillRoundRect(messM.raquetteX_J2, 4, 30, 4, 4, SH110X_WHITE);
+
+      for (int i=0; i<vieJ2; i++){
+        display.setCursor(0, 20+i*8);
+        display.write(0x03);
+      }
+
       display.display();
       
       if(!digitalRead(BUTTON_C)) {
         menu.setItems(menuPrincipal);
+        vieJ2=3;
         mode = MenuAcceuil;
       }
       break;
@@ -235,9 +263,15 @@ void loop() {
     
     case Parametres:
       display.clearDisplay();
-      display.setCursor(0,10);
-      display.println("   PARAMETRES");
-      display.println("\n (Pas d'options ici)");
+
+      display.setTextColor(SH110X_WHITE);
+      display.setCursor(0, 0);
+
+      display.println("PARAMETRES");
+      display.println("----------------");
+      display.println("Fonctionnalites");
+      display.println("a venir...");
+
       display.display();
       if(!digitalRead(BUTTON_C)) {
         menu.setItems(menuPrincipal);
@@ -269,6 +303,13 @@ void gameOver(){
 
 void pauseGame(){
   menu.drawMenu(display);
+
+    if (ignorePremierAppuiPause) {
+      if (analogRead(A2) < 4000) { // bouton relâché
+        ignorePremierAppuiPause = false;
+      }
+    return;
+  }
   
   if (menu.handleJoystick()) {
     int action = menu.getSelectedValue();
@@ -280,4 +321,8 @@ void pauseGame(){
       mode = MenuAcceuil;
     }
   }
+}
+
+void bip() {
+  tone(PIN_BUZZER, 1200, 30);
 }
