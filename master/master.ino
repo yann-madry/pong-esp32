@@ -8,15 +8,13 @@
 #include "balle.h"
 #include "menu.h"  
   
-#define BUTTON_A 15
-#define BUTTON_B 32
 #define BUTTON_C 14
 #define PIN_BUZZER A0
 
 Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
-enum State {
-  MenuAcceuil, // Attention à l'orthographe pour correspondre au reste
+enum Statut {
+  MenuAcceuil, 
   GameSolo,
   GameMulti,
   GameOver,
@@ -25,13 +23,12 @@ enum State {
   Parametres
 };
 
-State mode = MenuAcceuil;
+Statut mode = MenuAcceuil;
 
 Barre barre;
 Barre adverse;
 Balle balle;
 
-// --- 1. DÉCLARATION DES MENUS (Avant l'objet Menu) ---
 MenuItem menuPrincipal[] = {
     {"MULTI", GameMulti},
     {"SOLO", GameSolo},
@@ -39,7 +36,7 @@ MenuItem menuPrincipal[] = {
 };
 
 MenuItem menuPause[] = {
-    {"REPRENDRE", GameSolo}, // Modifié en GameSolo ou GameMulti selon votre choix
+    {"REPRENDRE", GameSolo}, 
     {"RETOUR MENU", MenuAcceuil}
 };
 
@@ -48,8 +45,6 @@ MenuItem menuPerduSolo[] = {
     {"RETOUR MENU", MenuAcceuil}
 };
 
-// --- 2. INSTANCE UNIQUE DU MENU ---
-// On l'initialise par défaut avec le menu principal
 Menu menu(menuPrincipal);
 
 bool joystickAppuyer = false;
@@ -72,7 +67,7 @@ struct MessageMaitre {
     int raquetteX_J1; 
     int raquetteX_J2; 
     int balleX;       
-    int balleY;     
+    int balleY;       
 };
 
 MessageEsclave messE; 
@@ -86,8 +81,6 @@ void esclaveDonneX(const esp_now_recv_info_t *recvInfo, const uint8_t *temp, int
 void setup() {
   Serial.begin(115200);
   display.begin(0x3C, true);
-
-  Wire.setClock(400000);
 
   display.clearDisplay();
   display.setRotation(1);
@@ -111,11 +104,10 @@ void setup() {
   messE.pisition_joystick_esclave = 2048; 
   messE.modeEsclave = MenuAcceuil;
 
-  // L'initialisation dynamique redondante ici a été supprimée
 }
 
 void loop() {
-  // Envoi régulier du Maître (toutes les 40ms)
+  // Envoi régulier du Maître 
   static unsigned long lastSend = 0;
   if (millis() - lastSend > 40) {
     messM.commandeMode = mode;
@@ -129,15 +121,14 @@ void loop() {
 
   switch (mode) {
     case MenuAcceuil:
-      menu.drawMenu(display); // On utilise l'objet générique 'menu'
+      menu.drawMenu(display); 
       
-      if (menu.handleJoystick()) { // Pas d'argument ici !
-        // On récupère directement la valeur (GameMulti, GameSolo, etc.)
+      if (menu.handleJoystick()) { 
         int action = menu.getSelectedValue(); 
         
         if (action == GameMulti) mode = AttenteJoueur;
         else if (action == GameSolo) { 
-          vie = 3;
+          vie = 3; 
           score = 0;
           barre.reset(); 
           balle.reset(); 
@@ -153,7 +144,7 @@ void loop() {
       display.setCursor(0, 10);
       display.println("   MODE MULTI");
       display.println(" En attente du J2...");
-      display.println(" ----------------");
+      display.println(" --------------------");
       
       if (millis() - dernierSignalRecu < 1000 && (messE.modeEsclave == AttenteJoueur || messE.modeEsclave == GameMulti)) {
          display.println("\n CONNEXION REUSSIE !");
@@ -178,7 +169,7 @@ void loop() {
       }
 
       if(!digitalRead(BUTTON_C)) {
-        menu.setItems(menuPrincipal); // On s'assure de recharger le bon menu
+        menu.setItems(menuPrincipal); 
         mode = MenuAcceuil;
       }
       delay(20);
@@ -187,18 +178,20 @@ void loop() {
     case GameSolo:
       display.clearDisplay();
       if (vie == 0) {
-        menu.setItems(menuPerduSolo); // 🔄 On bascule le menu sur l'écran de défaite
+        menu.setItems(menuPerduSolo); 
         mode = GameOver;
       }
       else {
-        if (balle.perdu()){ vie--; balle.reset(); barre.reset(); }
+        if (balle.perdu()){
+          vie--; 
+          balle.reset(); 
+          barre.reset(); 
+        }
         else {
           adverse.y=0;
           barre.deplacement(analogRead(A3));
           balle.deplacement(barre);
           adverse.suivreBalle(balle.x);
-
-          
           
           if(!digitalRead(BUTTON_C)) {
             menu.setItems(menuPrincipal);
@@ -206,11 +199,11 @@ void loop() {
           }
 
           // Clic Joystick pour Pause
-          if (analogRead(A2) >= 4090) { // Changé à 4090 pour matcher votre menu.cpp
+          if (analogRead(A2) >= 4090) { 
             if (!joystickAppuyer) { joystickAppuyer = true; tDep = millis(); } 
             else if (millis() - tDep >= 1000) { 
               joystickAppuyer = false; 
-              menu.setItems(menuPause); // 🔄 On charge le menu de pause
+              menu.setItems(menuPause);
               mode = PauseGame; 
             }
           } else { joystickAppuyer = false; }
@@ -221,7 +214,9 @@ void loop() {
           }
 
           display.setCursor(0,0);
-          for (int i=0; i<vie; i++){ display.write(0x03); }
+          for (int i=0; i<vie; i++){
+            display.write(0x03);
+          }
 
           // Affichage du score à droite
           display.setCursor(90, 0);
@@ -258,16 +253,27 @@ void loop() {
 
       if (balleLancee) {
         int nextX = balle.x + balle.sensX * balle.speed;
-        if (nextX - balle.r <= 0 || nextX + balle.r >= 128) { balle.sensX = -balle.sensX; }
+        if (nextX - balle.r <= 0 || nextX + balle.r >= 128) { 
+          balle.sensX = -balle.sensX; 
+        }
         balle.x += balle.sensX * balle.speed;
         balle.y += balle.sensY * balle.speed;
 
-        if (balle.y + balle.r >= barre.y && balle.x >= barre.x && balle.x <= barre.x + barre.width) { balle.sensY = -1; }
-        if (balle.y - balle.r <= adverse.y + adverse.height && balle.x >= adverse.x && balle.x <= adverse.x + adverse.width) { balle.sensY = 1; }
-        if (balle.y > 128 || balle.y < 0) { balleLancee = false; balle.speed = 1; }
+        if (balle.y + balle.r >= barre.y && balle.x >= barre.x && balle.x <= barre.x + barre.width) { 
+          balle.sensY = -1; 
+        }
+        if (balle.y - balle.r <= adverse.y + adverse.height && balle.x >= adverse.x && balle.x <= adverse.x + adverse.width) { 
+          balle.sensY = 1; 
+        }
+        if (balle.y > 128 || balle.y < 0) { 
+          balleLancee = false; 
+          balle.speed = 1;
+        }
       }
 
-      if (balle.y >= 64) { display.fillCircle(balle.x, balle.y - 64, balle.r, SH110X_WHITE); }
+      if (balle.y >= 64) { 
+        display.fillCircle(balle.x, balle.y - 64, balle.r, SH110X_WHITE); 
+      }
       display.fillRoundRect(barre.x, barre.y - 64, barre.width, barre.height, 4, SH110X_WHITE);
       display.display();
 
@@ -301,18 +307,19 @@ void loop() {
 }
 
 void gameOver(){
-  // Utilisation de votre classe Menu au lieu du texte fixe d'avant !
   menu.drawMenu(display);
   
   if (menu.handleJoystick()) {
     int action = menu.getSelectedValue();
-    if (action == GameSolo || action == GameMulti) { // Bouton Rejouer
+
+    // Bouton Rejouer
+    if (action == GameSolo || action == GameMulti) { 
       mode = GameSolo; 
       vie = 3; 
-      score=0;
       barre.reset(); 
       balle.reset();
-    } else { // Bouton Retour Menu
+      
+    } else {  // Bouton Retour Menu
       menu.setItems(menuPrincipal);
       mode = MenuAcceuil;
     }
@@ -320,14 +327,16 @@ void gameOver(){
 }
 
 void pauseGame(){
-  // Utilisation de votre classe Menu pour la pause !
   menu.drawMenu(display);
   
   if (menu.handleJoystick()) {
     int action = menu.getSelectedValue();
-    if (action == GameSolo || action == GameMulti) { // Bouton Reprendre
-      mode = GameSolo; // Reprend la partie en cours
-    } else { // Bouton Retour Menu
+
+    // Bouton Reprendre
+    if (action == GameSolo || action == GameMulti) { 
+      mode = GameSolo;
+
+    } else {  // Bouton Retour Menu
       menu.setItems(menuPrincipal);
       mode = MenuAcceuil;
     }

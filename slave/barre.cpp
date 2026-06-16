@@ -9,25 +9,19 @@ Barre::Barre() {
 }
 
 void Barre::deplacement(int v) {
-  if (v<1000 && x>0) {
-    x-=speed;
-  }
+  if (v<1000 && x>0) x-=speed;
 
-  if (v>2000 && x<128-width-speed) {
-    x+=speed;
-  }
+  if (v>2000 && x<128-width-speed) x+=speed;
 }
 
 void Barre::suivreBalle(int balleX) {
-    int centre = x + width/2;
+  int centre = x + width/2;
 
-    if (balleX < centre - speed)
-        x -= speed;
-    else if (balleX > centre + speed)
-        x += speed;
+  if (balleX < centre - speed) x -= speed;
+  else if (balleX > centre + speed) x += speed;
 }
 
-void Barre::afficher(Adafruit_GFX& display){
+void Barre::afficher(Adafruit_GFX& display) {
   display.fillRoundRect(x, y, width, height, 4, 1);
 }
 

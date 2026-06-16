@@ -12,7 +12,7 @@ Balle::Balle() {
 }
 
 void Balle::deplacement(const Barre& barre) {
-  vientDeToucher = false; // reset à chaque frame
+  vientDeToucher = false;
 
   int nextX = x + sensX * speed;
   int nextY = y + sensY * speed;
@@ -27,10 +27,7 @@ void Balle::deplacement(const Barre& barre) {
     if (sensX == 0) sensX = -1;
     if (speed < maxSpeed) speed++;
 
-    // On marque le rebond uniquement si c'est la barre joueur (en bas)
-    if (nextY + r >= 64 - barre.height) {
-      vientDeToucher = true; // ← AJOUT
-    }
+    if (nextY + r >= 64 - barre.height) vientDeToucher = true;
   }
 
   x = x + sensX * speed;
@@ -38,11 +35,10 @@ void Balle::deplacement(const Barre& barre) {
 }
 
 bool Balle::toucheBarre(const Barre& b) {
-  return vientDeToucher; // ← simplifié
+  return vientDeToucher
 }
-
-void Balle::afficher(Adafruit_GFX& display){
-  display.fillCircle(x, y, r, 1);
+void Balle::afficher(Adafruit_GFX& display) {
+  display.fillCircle(x, y, r, 1)
 }
 
 bool Balle::perdu(){
