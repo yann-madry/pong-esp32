@@ -271,10 +271,17 @@ void loop() {
         if (balle.y + balle.r >= barre.y && balle.x >= barre.x && balle.x <= barre.x + barre.width) { 
           balle.sensY = -1; 
           bip();
+          if (balle.speed < 5) {
+            balle.speed += 1;
+          }
         }
+        //raquette haut
         if (balle.y - balle.r <= adverse.y + adverse.height && balle.x >= adverse.x && balle.x <= adverse.x + adverse.width) { 
           balle.sensY = 1; 
           bip();
+          if (balle.speed < 5) {
+            balle.speed += 0.2;
+          }
         }
         if (balle.y > 128 || balle.y < 0) { 
           balleLancee = false; 

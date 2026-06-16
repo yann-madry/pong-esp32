@@ -235,7 +235,7 @@ void loop() {
         display.fillCircle(messM.balleX, messM.balleY, 2, SH110X_WHITE); 
       }
 
-      if (balle.y > 128 || balle.y < 0) vieJ2--;
+      if (messM.balleY > 128 || messM.balleY < 0) vieJ2--;
 
       display.fillRoundRect(messM.raquetteX_J2, 4, 30, 4, 4, SH110X_WHITE);
 
