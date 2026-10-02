@@ -4,6 +4,12 @@ Un Pong à deux joueurs qui tourne sur **deux cartes ESP32**, chacune avec son �
 
 Projet réalisé en binôme en 1ʳᵉ année de BUT Informatique (IUT Lyon 1, site de Bourg-en-Bresse), SAÉ 2.03, juin 2026.
 
+## Démonstration
+
+[![Vidéo de démonstration du Pong sur deux cartes ESP32](https://img.youtube.com/vi/keIEQiKue9o/hqdefault.jpg)](https://youtu.be/keIEQiKue9o)
+
+Cliquer sur l'image pour voir la vidéo de démonstration (en anglais).
+
 ## Fonctionnalités
 
 - **Mode multijoueur** sur deux cartes
