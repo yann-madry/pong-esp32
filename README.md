@@ -12,14 +12,27 @@ Projet réalisé en binôme en 1ʳᵉ année de BUT Informatique (IUT Lyon 1, si
   - écran d'attente tant que l'autre joueur n'est pas là, et retour automatique à cet écran si le signal est perdu plus de 2 secondes.
 - **Mode solo** contre une raquette automatique, avec 3 vies et un score.
 - **Menus au joystick** : accueil, pause (appui long), fin de partie.
-- La balle accélère au fil des échanges, et un buzzer émet un bip à chaque rebond.
+- La balle accélère au fil des échanges, avec un bip à chaque rebond.
+- **Musique de fond** en multijoueur : la carte esclave joue le thème de Tetris sans bloquer le jeu.
 
 ## Matériel
 
-- 2 cartes Adafruit Feather ESP32
-- 2 écrans OLED 128×64 (SH1107, FeatherWing)
-- 2 joysticks analogiques
-- 1 buzzer par carte
+Pour chaque joueur :
+
+- 1 carte ESP32 au format Feather
+- 1 écran OLED 128×64 SH1107 (I²C), avec son bouton C intégré
+- 1 Grove Shield FeatherWing (Adafruit), sur lequel se branchent les modules sans soudure
+- 1 joystick Grove, sur le port analogique A2/A3
+- 1 haut-parleur Grove, sur le port A0
+
+## Commandes
+
+| Action | Geste |
+|---|---|
+| Naviguer dans les menus, déplacer la raquette | Joystick |
+| Valider, lancer la balle | Clic du joystick |
+| Mettre en pause (mode solo) | Clic maintenu une seconde |
+| Revenir au menu | Bouton C de l'écran |
 
 ## Organisation du code
 
@@ -45,9 +58,10 @@ Projet mené à deux par **Yann Madry** et **Thomas Bonnefoy**.
 
 - Faire communiquer deux microcontrôleurs en pair-à-pair : structures de messages, envoi périodique, fonction de réception.
 - Garder un état de jeu cohérent entre deux machines en confiant tous les calculs à une seule (architecture maître / esclave).
+- Jouer une mélodie sans bloquer la boucle de jeu, en s'appuyant sur `millis()` plutôt que sur `delay()`.
 - Diagnostiquer une panne : nous avons longtemps cherché un bug dans le code alors que le problème venait d'une carte défectueuse.
 
 ## Pistes d'amélioration
 
 - Écran « Paramètres » (réglage du son), aujourd'hui vide.
-- Vraie musique à la place du simple bip.
+- Musique de fond sur la carte maître également.

@@ -7,9 +7,45 @@
 #include "barre.h"
 #include "balle.h"
 #include "menu.h"  
-  
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// --- MUSIQUE TETRIS NON-BLOQUANTE ---
+#define NOTE_C4  262
+#define NOTE_D4  294
+#define NOTE_E4  330
+#define NOTE_F4  349
+#define NOTE_G4  392
+#define NOTE_A4  440
+#define NOTE_B4  494
+#define NOTE_C5  523
+#define NOTE_D5  587
+#define NOTE_E5  659
+#define NOTE_F5  698
+#define NOTE_G5  784
+#define NOTE_A5  880
+
+const int melodieTetris[] = {
+  NOTE_E5, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_C5, NOTE_B4, NOTE_A4, NOTE_A4, NOTE_C5, NOTE_E5, NOTE_D5, NOTE_C5, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5,
+  NOTE_C5, NOTE_A4, NOTE_A4, NOTE_A4, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_F5, NOTE_A5, NOTE_G5, NOTE_F5, NOTE_E5, NOTE_C5, NOTE_E5, NOTE_D5, NOTE_C5,
+  NOTE_B4, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5, NOTE_C5, NOTE_A4, NOTE_A4
+};
+
+const int rythmeTetris[] = {
+  4, 8, 8, 4, 8, 8, 4, 8, 8, 4, 8, 8, 4, 8, 8, 4,
+  4, 4, 4, 4, 4, 4, 2, 8, 4, 8, 8, 4, 8, 8, 4, 8,
+  8, 4, 8, 8, 4, 4, 4, 4
+};
+
+const int nbNotesTetris = sizeof(melodieTetris) / sizeof(melodieTetris[0]);
+
+int indexNoteCourante = 0;
+unsigned long tempsProchaineNote = 0;
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 #define BUTTON_C 14
-#define PIN_BUZZER A0
+#define PIN_BUZZER 26 // Modifié : Remplacement de A0 par le GPIO 26 (Broche numérique de l'ESP32 pour le port Grove A0)
 
 Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
@@ -81,7 +117,7 @@ void maitreDonneInfos(const esp_now_recv_info_t *recvInfo, const uint8_t *temp, 
 
   messE.pisition_joystick_esclave = analogRead(A3); 
   messE.modeEsclave = mode; 
-  esp_now_send(adresseMaitre, (uint8_t *) &messE, sizeof(messE));
+  esp_now_send(adresseMaitre, (uint8_t *)  &messE, sizeof(messE));
 }
 
 void setup() {
@@ -94,8 +130,12 @@ void setup() {
   display.setTextColor(SH110X_WHITE);
 
   pinMode(BUTTON_C, INPUT_PULLUP);
+  pinMode(PIN_BUZZER, OUTPUT);
 
-  pinMode(PIN_BUZZER, OUTPUT); //speaker
+  // Émet un son de 200ms pour valider matériellement que le haut-parleur fonctionne sur ce GPIO
+  tone(PIN_BUZZER, 1000);
+  delay(200);
+  noTone(PIN_BUZZER);
 
   WiFi.mode(WIFI_AP_STA);
   
@@ -224,11 +264,14 @@ void loop() {
 
     case GameMulti:
       if (millis() - derniereReception > 2000 || messM.commandeMode == MenuAcceuil) {
+        couperMusique();
         mode = AttenteJoueur;
         enCoursDeValidation = false;
         vieJ2=3;
         break;
       }
+
+      jouerTetris(); // Appel permanent en tâche de fond
 
       display.clearDisplay();
       if (messM.balleY < 64) {
@@ -247,6 +290,7 @@ void loop() {
       display.display();
       
       if(!digitalRead(BUTTON_C)) {
+        couperMusique();
         menu.setItems(menuPrincipal);
         vieJ2=3;
         mode = MenuAcceuil;
@@ -324,5 +368,36 @@ void pauseGame(){
 }
 
 void bip() {
-  tone(PIN_BUZZER, 1200, 30);
+  tone(PIN_BUZZER, 1200);
+  delay(30); // Court delay acceptable uniquement sur l'impact de balle unique
+  noTone(PIN_BUZZER);
+}
+
+void jouerTetris() {
+  unsigned long tempsActuel = millis();
+
+  if (tempsActuel >= tempsProchaineNote) {
+    int dureeDeBase = 700; 
+    int dureeNote = dureeDeBase / rythmeTetris[indexNoteCourante];
+    
+    tempsProchaineNote = tempsActuel + dureeNote;
+
+    if (melodieTetris[indexNoteCourante] != 0) {
+      tone(PIN_BUZZER, melodieTetris[indexNoteCourante]);
+    } else {
+      noTone(PIN_BUZZER);
+    }
+
+    indexNoteCourante = (indexNoteCourante + 1) % nbNotesTetris;
+  } 
+  // Coupe légèrement le son un peu avant la fin de la note pour séparer les notes identiques
+  else if (tempsProchaineNote - tempsActuel < 25) {
+    noTone(PIN_BUZZER);
+  }
+}
+
+void couperMusique() {
+  noTone(PIN_BUZZER);
+  indexNoteCourante = 0;
+  tempsProchaineNote = 0;
 }
